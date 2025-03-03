@@ -17,4 +17,20 @@ export class Branch {
 	public isProhibited(prohibitedNames: ReadonlyArray<string>): boolean {
 		return prohibitedNames.includes(this.VALUE);
 	}
+
+	public isTooLong(maxLength?: number): boolean {
+		if (maxLength === undefined) {
+			return false;
+		}
+
+		return this.VALUE.length > maxLength;
+	}
+
+	public isTooShort(minLength?: number): boolean {
+		if (minLength === undefined) {
+			return false;
+		}
+
+		return this.VALUE.length < minLength;
+	}
 }

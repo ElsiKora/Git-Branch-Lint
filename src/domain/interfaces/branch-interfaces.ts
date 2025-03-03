@@ -2,6 +2,8 @@
  * Interface for branch configuration
  */
 export interface IBranchConfig {
+	readonly MAXLENGTH?: number;
+	readonly MINLENGTH?: number;
 	PARAMS: IBranchParameters;
 	readonly PATTERN: string;
 	readonly PROHIBITED: ReadonlyArray<string>;

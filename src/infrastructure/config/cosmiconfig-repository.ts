@@ -7,6 +7,10 @@ import { cosmiconfig, type CosmiconfigResult } from "cosmiconfig";
  * Default configuration for branch linting
  */
 const DEFAULT_CONFIG: IBranchConfig = {
+	// eslint-disable-next-line @elsikora-typescript/no-magic-numbers
+	MAXLENGTH: 50,
+	// eslint-disable-next-line @elsikora-typescript/no-magic-numbers
+	MINLENGTH: 5,
 	PARAMS: {
 		NAME: ["[a-z0-9-]+"],
 		TYPE: ["feature", "hotfix", "support", "bugfix", "release"],

@@ -1,7 +1,7 @@
 import type { IBranchConfig, TBranchName } from "../../domain/interfaces/branch-interfaces";
 
 import { Branch } from "../../domain/entities/branch";
-import { PatternMatchError, ProhibitedBranchError } from "../../domain/errors/lint-errors";
+import { BranchTooLongError, BranchTooShortError, PatternMatchError, ProhibitedBranchError } from "../../domain/errors/lint-errors";
 
 /**
  * Use case for linting a branch name
@@ -13,12 +13,30 @@ export class LintBranchNameUseCase {
 	 * @param config The branch configuration
 	 * @throws {ProhibitedBranchError} When branch name is prohibited
 	 * @throws {PatternMatchError} When branch name doesn't match pattern
+	 * @throws {BranchTooShortError} When branch name is shorter than the minimum length
+	 * @throws {BranchTooLongError} When branch name is longer than the maximum length
 	 */
 	public execute(branchName: TBranchName, config: IBranchConfig): void {
 		const branch: Branch = new Branch(branchName);
 
 		if (branch.isProhibited(config.PROHIBITED)) {
 			throw new ProhibitedBranchError(branchName);
+		}
+
+		// @ts-ignore
+
+		if (branch.isTooShort(config.MINLENGTH)) {
+			// @ts-ignore
+
+			throw new BranchTooShortError(branchName, config.MINLENGTH);
+		}
+
+		// @ts-ignore
+
+		if (branch.isTooLong(config.MAXLENGTH)) {
+			// @ts-ignore
+
+			throw new BranchTooLongError(branchName, config.MAXLENGTH);
 		}
 
 		this.validatePattern(branch.getName(), config);
