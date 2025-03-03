@@ -1,32 +1,38 @@
-import type { IConfig } from "./get-config";
+import { GetBranchConfigUseCase } from "./application/use-cases/get-branch-config-use-case";
+import { GetCurrentBranchUseCase } from "./application/use-cases/get-current-branch-use-case";
+import { LintBranchNameUseCase } from "./application/use-cases/lint-branch-name-use-case";
+import { CosmiconfigRepository } from "./infrastructure/config/cosmiconfig-repository";
+import { GitBranchRepository } from "./infrastructure/git/git-branch-repository";
+import { CliController } from "./presentation/cli/cli-controller";
 
-import { LintError } from "./errors";
-import { getBranchName } from "./get-branch-name";
-// eslint-disable-next-line no-duplicate-imports
-import { getConfig } from "./get-config";
-import { lintBranchName } from "./lint-branch-name";
-import { printError } from "./print-error";
-import { printHint } from "./print-hint";
-
+/**
+ * Application name used for configuration
+ */
 const APP_NAME: string = "git-branch-lint";
 
+/**
+ * Main function that bootstraps the application
+ */
 const main = async (): Promise<void> => {
-	const [config, branchName]: [IConfig, string] = await Promise.all([getConfig(APP_NAME), getBranchName()]);
+	// Infrastructure layer
+	const configRepository: CosmiconfigRepository = new CosmiconfigRepository();
+	const branchRepository: GitBranchRepository = new GitBranchRepository();
 
-	try {
-		lintBranchName(branchName, config);
-	} catch (error: unknown) {
-		if (!(error instanceof LintError)) throw error;
+	// Application layer
+	const getBranchConfigUseCase: GetBranchConfigUseCase = new GetBranchConfigUseCase(configRepository);
+	const getCurrentBranchUseCase: GetCurrentBranchUseCase = new GetCurrentBranchUseCase(branchRepository);
+	const lintBranchNameUseCase: LintBranchNameUseCase = new LintBranchNameUseCase();
 
-		printError(error.message);
-		printHint(error, config);
-		// eslint-disable-next-line @elsikora-unicorn/no-process-exit,elsikora-node/no-process-exit
-		process.exit(1);
-	}
+	// Presentation layer
+	const cliController: CliController = new CliController(getBranchConfigUseCase, getCurrentBranchUseCase, lintBranchNameUseCase);
+
+	// Execute the application
+	await cliController.execute(APP_NAME);
 };
 
+// Bootstrap the application and handle errors
 main().catch((error: unknown) => {
-	printError("[LintBranchName] Unhandled error occurred");
+	console.error("[LintBranchName] Unhandled error occurred");
 
 	throw error;
 });

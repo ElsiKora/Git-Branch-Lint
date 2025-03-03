@@ -9,7 +9,7 @@ export default {
 	 * External dependencies that should not be bundled.
 	 * These are either Node.js built-in modules or dependencies that will be installed.
 	 */
-	external: ["chalk", "cosmiconfig", "child_process", "path-to-regexp"],
+	external: ["chalk", "cosmiconfig", "node:child_process", "node:util", "path-to-regexp"],
 
 	/**
 	 * Entry point for the application.
