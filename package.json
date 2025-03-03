@@ -20,7 +20,7 @@
 	"type": "module",
 	"main": "bin/index.js",
 	"bin": {
-		"branch-name-lint": "./bin/index.js"
+		"git-branch-lint": "./bin/index.js"
 	},
 	"files": [
 		"bin"
