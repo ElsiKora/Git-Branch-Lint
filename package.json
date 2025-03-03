@@ -1,6 +1,6 @@
 {
 	"name": "@elsikora/git-branch-lint",
-	"version": "1.0.1-dev.1",
+	"version": "1.0.1",
 	"description": "Lint your git branch names",
 	"keywords": [
 		"lint",
