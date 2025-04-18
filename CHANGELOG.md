@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.0.1...v1.1.0) (2025-04-18)
+
+
+### Features
+
+* **branch:** add interactive branch creation tool with config improvements ([319b27c](https://github.com/ElsiKora/Git-Branch-Lint/commit/319b27c55600f39d0a9090edbddb34873d629116))
+
 ## [1.0.1](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.0.0...v1.0.1) (2025-03-03)
 
 # 1.0.0 (2025-03-03)
