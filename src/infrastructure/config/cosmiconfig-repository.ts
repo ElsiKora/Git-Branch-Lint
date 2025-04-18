@@ -1,4 +1,5 @@
-import type { IBranchConfig } from "../../domain/interfaces/branch-interfaces";
+/* eslint-disable @elsikora/typescript/no-magic-numbers */
+import type { BranchLintConfig } from "../../domain/interfaces/config.type";
 import type { IConfigRepository } from "../../domain/interfaces/repository-interfaces";
 
 import { cosmiconfig, type CosmiconfigResult } from "cosmiconfig";
@@ -6,17 +7,22 @@ import { cosmiconfig, type CosmiconfigResult } from "cosmiconfig";
 /**
  * Default configuration for branch linting
  */
-const DEFAULT_CONFIG: IBranchConfig = {
-	// eslint-disable-next-line @elsikora-typescript/no-magic-numbers
-	MAXLENGTH: 50,
-	// eslint-disable-next-line @elsikora-typescript/no-magic-numbers
-	MINLENGTH: 5,
-	PARAMS: {
-		NAME: ["[a-z0-9-]+"],
-		TYPE: ["feature", "hotfix", "support", "bugfix", "release"],
+export const DEFAULT_CONFIG: BranchLintConfig = {
+	branches: {
+		bugfix: { description: "🐞 Fixing issues in existing functionality", title: "Bugfix" },
+		feature: { description: "🆕 Integration of new functionality", title: "Feature" },
+		hotfix: { description: "🚑 Critical fixes for urgent issues", title: "Hotfix" },
+		release: { description: "📦 Preparing a new release version", title: "Release" },
+		support: { description: "🛠️ Support and maintenance tasks", title: "Support" },
 	},
-	PATTERN: ":type/:name",
-	PROHIBITED: ["ci", "wip", "main", "test", "build", "master", "release", "dev", "develop"],
+	ignore: ["dev"],
+	rules: {
+		"branch-max-length": 50,
+		"branch-min-length": 5,
+		"branch-pattern": ":type/:name",
+		"branch-prohibited": ["main", "master", "release"],
+		"branch-subject-pattern": "[a-z0-9-]+",
+	},
 };
 
 /**
@@ -28,7 +34,7 @@ export class CosmiconfigRepository implements IConfigRepository {
 	 * @param appName The name of the application
 	 * @returns A promise that resolves to the branch configuration
 	 */
-	public async getConfig(appName: string): Promise<IBranchConfig> {
+	public async getConfig(appName: string): Promise<BranchLintConfig> {
 		const configExplorer: ReturnType<typeof cosmiconfig> = cosmiconfig(appName, {
 			packageProp: `elsikora.${appName}`,
 			searchPlaces: ["package.json", `.elsikora/.${appName}rc`, `.elsikora/.${appName}rc.json`, `.elsikora/.${appName}rc.yaml`, `.elsikora/.${appName}rc.yml`, `.elsikora/.${appName}rc.js`, `.elsikora/.${appName}rc.ts`, `.elsikora/.${appName}rc.mjs`, `.elsikora/.${appName}rc.cjs`, `.elsikora/${appName}.config.js`, `.elsikora/${appName}.config.ts`, `.elsikora/${appName}.config.mjs`, `.elsikora/${appName}.config.cjs`],
@@ -40,51 +46,12 @@ export class CosmiconfigRepository implements IConfigRepository {
 		}
 
 		// Convert the config to match our interfaces
-		const providedConfig: Record<string, unknown> = result.config as Record<string, unknown>;
-		const uppercasedConfig: Record<string, unknown> = {};
+		const providedConfig: BranchLintConfig = result.config as BranchLintConfig;
 
-		// Create a new object with uppercase keys instead of modifying the original
-		for (const key of Object.keys(providedConfig)) {
-			const uppercaseKey: string = key.toUpperCase();
-			const value: unknown = providedConfig[key];
-
-			if (Array.isArray(value)) {
-				// Preserve arrays
-				// eslint-disable-next-line @elsikora-typescript/no-unsafe-assignment
-				uppercasedConfig[uppercaseKey] = [...value];
-			} else if (typeof value === "object" && value !== null) {
-				// Handle nested objects
-				const nestedObject: Record<string, unknown> = {};
-
-				for (const subKey of Object.keys(value as Record<string, unknown>)) {
-					const subValue: unknown = (value as Record<string, unknown>)[subKey];
-
-					if (Array.isArray(subValue)) {
-						// Preserve nested arrays
-						// eslint-disable-next-line @elsikora-typescript/no-unsafe-assignment
-						nestedObject[subKey.toUpperCase()] = [...subValue];
-					} else {
-						nestedObject[subKey.toUpperCase()] = subValue;
-					}
-				}
-				uppercasedConfig[uppercaseKey] = nestedObject;
-			} else {
-				// Handle primitive values
-				uppercasedConfig[uppercaseKey] = value;
-			}
-		}
-
-		const mergedConfig: IBranchConfig = {
+		const mergedConfig: BranchLintConfig = {
 			...DEFAULT_CONFIG,
-			...(uppercasedConfig as unknown as IBranchConfig),
+			...providedConfig,
 		};
-
-		if (uppercasedConfig.PARAMS && DEFAULT_CONFIG.PARAMS) {
-			mergedConfig.PARAMS = {
-				...DEFAULT_CONFIG.PARAMS,
-				...(uppercasedConfig.PARAMS as Record<string, unknown>),
-			};
-		}
 
 		return mergedConfig;
 	}

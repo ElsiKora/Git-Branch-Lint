@@ -1,4 +1,4 @@
-import type { IBranchConfig, TBranchName } from "../../domain/interfaces/branch-interfaces";
+import type { BranchLintConfig } from "../../domain/interfaces/config.type";
 
 import { Branch } from "../../domain/entities/branch";
 import { BranchTooLongError, BranchTooShortError, PatternMatchError, ProhibitedBranchError } from "../../domain/errors/lint-errors";
@@ -16,27 +16,25 @@ export class LintBranchNameUseCase {
 	 * @throws {BranchTooShortError} When branch name is shorter than the minimum length
 	 * @throws {BranchTooLongError} When branch name is longer than the maximum length
 	 */
-	public execute(branchName: TBranchName, config: IBranchConfig): void {
+	public execute(branchName: string, config: BranchLintConfig): void {
 		const branch: Branch = new Branch(branchName);
+		const configRules = config.rules;
+		const ignoreList = config.ignore ?? [];
 
-		if (branch.isProhibited(config.PROHIBITED)) {
+		if (configRules?.["branch-prohibited"] && branch.isProhibited(configRules["branch-prohibited"])) {
 			throw new ProhibitedBranchError(branchName);
 		}
 
-		// @ts-ignore
-
-		if (branch.isTooShort(config.MINLENGTH)) {
-			// @ts-ignore
-
-			throw new BranchTooShortError(branchName, config.MINLENGTH);
+		if (ignoreList.length > 0 && ignoreList.includes(branchName)) {
+			return;
 		}
 
-		// @ts-ignore
+		if (configRules?.["branch-min-length"] && branch.isTooShort(configRules["branch-min-length"])) {
+			throw new BranchTooShortError(branchName, configRules["branch-min-length"]);
+		}
 
-		if (branch.isTooLong(config.MAXLENGTH)) {
-			// @ts-ignore
-
-			throw new BranchTooLongError(branchName, config.MAXLENGTH);
+		if (configRules?.["branch-max-length"] && branch.isTooLong(configRules["branch-max-length"])) {
+			throw new BranchTooLongError(branchName, configRules["branch-max-length"]);
 		}
 
 		this.validatePattern(branch.getName(), config);
@@ -48,23 +46,29 @@ export class LintBranchNameUseCase {
 	 * @param config The branch configuration
 	 * @throws {PatternMatchError} When branch name doesn't match pattern
 	 */
-	private validatePattern(branchName: TBranchName, config: IBranchConfig): void {
+	private validatePattern(branchName: string, config: BranchLintConfig): void {
 		// Start with original pattern
-		let pattern: string = config.PATTERN;
+		let branchNamePattern: string | undefined = config.rules?.["branch-pattern"];
+		const subjectNamePattern: string | undefined = config.rules?.["branch-subject-pattern"];
 
-		// Process each parameter in the configuration
-		for (const [key, values] of Object.entries(config.PARAMS)) {
-			// Create the placeholder - IMPORTANT: Convert to lowercase to match pattern
+		if (!branchNamePattern) {
+			return;
+		}
+
+		const parameters: Record<string, Array<string>> = {
+			type: Object.keys(config.branches),
+			// Если branch-name-pattern не определён, не добавляем name в params
+			...(subjectNamePattern && { name: [subjectNamePattern] }),
+		};
+
+		// Обрабатываем параметры, если они есть
+		for (const [key, values] of Object.entries(parameters)) {
 			const placeholder: string = `:${key.toLowerCase()}`;
-
-			const parameterValues: Array<string> = values as Array<string>;
-
 			let replacement: string = "(";
 
-			for (let index: number = 0; index < parameterValues.length; index++) {
-				const value: string = parameterValues[index];
+			for (let index: number = 0; index < values.length; index++) {
+				const value: string = values[index];
 
-				// Add the value to the replacement pattern
 				if (value.startsWith("[")) {
 					replacement += value;
 				} else {
@@ -72,20 +76,17 @@ export class LintBranchNameUseCase {
 					replacement += escapedValue;
 				}
 
-				// Add OR separator if not the last value
-				if (index < parameterValues.length - 1) {
+				if (index < values.length - 1) {
 					replacement += "|";
 				}
 			}
 
 			replacement += ")";
-
-			// Replace the placeholder in the pattern
-			pattern = pattern.replaceAll(new RegExp(placeholder, "g"), replacement);
+			branchNamePattern = branchNamePattern.replaceAll(new RegExp(placeholder, "g"), replacement);
 		}
 
 		// Create the regular expression
-		const regexp: RegExp = new RegExp(`^${pattern}$`);
+		const regexp: RegExp = new RegExp(`^${branchNamePattern}$`);
 
 		// Test the branch name against the pattern
 		if (!regexp.test(branchName)) {

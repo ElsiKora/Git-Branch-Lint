@@ -1,4 +1,3 @@
-import type { TBranchName } from "../../domain/interfaces/branch-interfaces";
 import type { IBranchRepository } from "../../domain/interfaces/repository-interfaces";
 
 /**
@@ -19,7 +18,7 @@ export class GetCurrentBranchUseCase {
 	 * Execute the use case
 	 * @returns The current branch name
 	 */
-	public async execute(): Promise<TBranchName> {
+	public async execute(): Promise<string> {
 		return this.BRANCH_REPOSITORY.getCurrentBranchName();
 	}
 }

@@ -1,4 +1,4 @@
-import type { IBranchConfig } from "../../../domain/interfaces/branch-interfaces";
+import type { BranchLintConfig } from "../../../domain/interfaces/config.type";
 
 import chalk from "chalk";
 
@@ -14,7 +14,7 @@ export class HintFormatter {
 	 * @param config The branch configuration
 	 * @returns The formatted hint message
 	 */
-	public format(error: unknown, config: IBranchConfig): string {
+	public format(error: unknown, config: BranchLintConfig): string {
 		let output: string = "";
 
 		if (error instanceof PatternMatchError) {
@@ -31,17 +31,15 @@ export class HintFormatter {
 	 * @param config The branch configuration
 	 * @returns The formatted hint
 	 */
-	private formatPatternMatchHint(config: IBranchConfig): string {
+	private formatPatternMatchHint(config: BranchLintConfig): string {
 		let output: string = "";
+		const branchNamePattern: string | undefined = config.rules?.["branch-pattern"];
+		const branchTypeList: Array<string> = Array.isArray(config.branches) ? config.branches : Object.keys(config.branches);
 
-		output += `${chalk.blue("Expected pattern:")} ${chalk.yellow(config.PATTERN)}\n`;
+		output += branchNamePattern ? `${chalk.blue("Expected pattern:")} ${chalk.yellow(branchNamePattern)}\n` : "";
 
-		// Format the parameters
-		for (const [parameterName, parameterValues] of Object.entries(config.PARAMS)) {
-			const valuesList: string = (parameterValues as Array<string>).map((value: string) => chalk.yellow(value)).join(", ");
-
-			output += chalk.blue(`Valid ${parameterName} values:`) + " " + valuesList + "\n";
-		}
+		const valuesList: string = branchTypeList.map((value: string) => chalk.yellow(value)).join(", ");
+		output += chalk.blue(`Valid branch types:`) + " " + valuesList + "\n";
 
 		return output.trim();
 	}
@@ -51,8 +49,8 @@ export class HintFormatter {
 	 * @param config The branch configuration
 	 * @returns The formatted hint
 	 */
-	private formatProhibitedBranchHint(config: IBranchConfig): string {
-		const prohibitedList: string = config.PROHIBITED.map((name: string) => chalk.yellow(name)).join(", ");
+	private formatProhibitedBranchHint(config: BranchLintConfig): string {
+		const prohibitedList: string = config.rules?.["branch-prohibited"]?.map((name: string) => chalk.yellow(name)).join(", ") ?? "";
 
 		return `${chalk.blue("Prohibited branch names:")} ${prohibitedList}`;
 	}
