@@ -18,7 +18,13 @@
 	"license": "MIT",
 	"author": "ElsiKora",
 	"type": "module",
+	"exports": {
+		".": {
+			"types": "./bin/index.d.ts"
+		}
+	},
 	"main": "bin/index.js",
+	"types": "./bin/index.d.ts",
 	"bin": {
 		"git-branch-lint": "./bin/index.js"
 	},
@@ -48,7 +54,8 @@
 	"dependencies": {
 		"chalk": "^5.4.1",
 		"cosmiconfig": "^9.0.0",
-		"path-to-regexp": "^8.2.0"
+		"path-to-regexp": "^8.2.0",
+		"yargs": "^17.7.2"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^19.7.1",
@@ -63,7 +70,9 @@
 		"@semantic-release/github": "^11.0.1",
 		"@semantic-release/npm": "^12.0.1",
 		"@semantic-release/release-notes-generator": "^14.0.3",
-		"@types/node": "^22.13.8",
+		"@types/inquirer": "^9.0.7",
+		"@types/node": "^22.14.1",
+		"@types/yargs": "^17.0.33",
 		"commitizen": "^4.3.1",
 		"conventional-changelog-conventionalcommits": "^8.0.0",
 		"eslint": "^9.21.0",
@@ -74,8 +83,10 @@
 		"rimraf": "^6.0.1",
 		"rollup": "^4.34.9",
 		"semantic-release": "^24.2.3",
+		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
-		"typescript": "^5.7.3"
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.3"
 	},
 	"publishConfig": {
 		"access": "public"

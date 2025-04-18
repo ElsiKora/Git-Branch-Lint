@@ -1,4 +1,3 @@
-import type { TBranchName } from "../../domain/interfaces/branch-interfaces";
 import type { IBranchRepository } from "../../domain/interfaces/repository-interfaces";
 
 import { exec } from "node:child_process";
@@ -14,7 +13,7 @@ export class GitBranchRepository implements IBranchRepository {
 	 * Get the current branch name
 	 * @returns A promise that resolves to the current branch name
 	 */
-	public async getCurrentBranchName(): Promise<TBranchName> {
+	public async getCurrentBranchName(): Promise<string> {
 		const command: string = "git rev-parse --abbrev-ref HEAD";
 		const { stdout }: { stdout: string } = await execAsync(command);
 

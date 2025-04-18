@@ -1,7 +1,7 @@
 import type { GetBranchConfigUseCase } from "../../application/use-cases/get-branch-config-use-case";
 import type { GetCurrentBranchUseCase } from "../../application/use-cases/get-current-branch-use-case";
 import type { LintBranchNameUseCase } from "../../application/use-cases/lint-branch-name-use-case";
-import type { IBranchConfig, TBranchName } from "../../domain/interfaces/branch-interfaces";
+import type { BranchLintConfig } from "../../domain/interfaces/config.type";
 
 import { LintError } from "../../domain/errors/lint-errors";
 
@@ -42,7 +42,7 @@ export class CliController {
 	 */
 	public async execute(appName: string): Promise<void> {
 		try {
-			const [config, branchName]: [IBranchConfig, TBranchName] = await Promise.all([this.GET_BRANCH_CONFIG_USE_CASE.execute(appName), this.GET_CURRENT_BRANCH_USE_CASE.execute()]);
+			const [config, branchName]: [BranchLintConfig, string] = await Promise.all([this.GET_BRANCH_CONFIG_USE_CASE.execute(appName), this.GET_CURRENT_BRANCH_USE_CASE.execute()]);
 
 			this.LINT_BRANCH_NAME_USE_CASE.execute(branchName, config);
 		} catch (error: unknown) {
@@ -64,20 +64,20 @@ export class CliController {
 		if (error instanceof LintError) {
 			try {
 				// Get the configuration using the service instead of hardcoded values
-				const config: IBranchConfig = await this.GET_BRANCH_CONFIG_USE_CASE.execute("git-branch-lint");
+				const config: BranchLintConfig = await this.GET_BRANCH_CONFIG_USE_CASE.execute("git-branch-lint");
 
 				console.error(this.ERROR_FORMATTER.format(error.message));
 				console.log(this.HINT_FORMATTER.format(error, config));
 
 				// Since this is a CLI tool, it's appropriate to exit the process on validation errors
 				// ESLint wants us to throw instead, but this is a CLI application where exit is acceptable
-				// eslint-disable-next-line elsikora-node/no-process-exit, @elsikora-unicorn/no-process-exit
+				// eslint-disable-next-line @elsikora/unicorn/no-process-exit
 				process.exit(1);
 			} catch {
 				console.error(this.ERROR_FORMATTER.format("Failed to load configuration for error hint"));
 				console.error(this.ERROR_FORMATTER.format(error.message));
 
-				// eslint-disable-next-line elsikora-node/no-process-exit, @elsikora-unicorn/no-process-exit
+				// eslint-disable-next-line @elsikora/unicorn/no-process-exit
 				process.exit(1);
 			}
 		}

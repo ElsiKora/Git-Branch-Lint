@@ -21,4 +21,11 @@ export default [
 		withUnicorn: true,
 		withYaml: true,
 	})),
+	{
+		rules: {
+			"@elsikora/check-file/folder-match-with-fex": "off",
+			"@elsikora/typescript/naming-convention": "off",
+			"@elsikora/typescript/typedef": "off",
+		},
+	},
 ];

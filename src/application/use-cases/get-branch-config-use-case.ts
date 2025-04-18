@@ -1,4 +1,4 @@
-import type { IBranchConfig } from "../../domain/interfaces/branch-interfaces";
+import type { BranchLintConfig } from "../../domain/interfaces/config.type";
 import type { IConfigRepository } from "../../domain/interfaces/repository-interfaces";
 
 /**
@@ -20,7 +20,7 @@ export class GetBranchConfigUseCase {
 	 * @param appName The application name
 	 * @returns The branch configuration
 	 */
-	public async execute(appName: string): Promise<IBranchConfig> {
+	public async execute(appName: string): Promise<BranchLintConfig> {
 		return this.CONFIG_REPOSITORY.getConfig(appName);
 	}
 }

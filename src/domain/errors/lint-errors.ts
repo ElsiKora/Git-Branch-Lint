@@ -13,7 +13,7 @@ export class LintError extends Error {
  */
 export class BranchTooLongError extends LintError {
 	constructor(branchName: string, maxLength: number) {
-		// eslint-disable-next-line @elsikora-typescript/restrict-template-expressions
+		// eslint-disable-next-line @elsikora/typescript/restrict-template-expressions
 		super(`Branch name "${branchName}" is too long (maximum length: ${maxLength})`);
 		this.name = "BranchTooLongError";
 	}
@@ -24,7 +24,7 @@ export class BranchTooLongError extends LintError {
  */
 export class BranchTooShortError extends LintError {
 	constructor(branchName: string, minLength: number) {
-		// eslint-disable-next-line @elsikora-typescript/restrict-template-expressions
+		// eslint-disable-next-line @elsikora/typescript/restrict-template-expressions
 		super(`Branch name "${branchName}" is too short (minimum length: ${minLength})`);
 		this.name = "BranchTooShortError";
 	}

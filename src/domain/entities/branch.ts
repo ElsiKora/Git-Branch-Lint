@@ -1,16 +1,14 @@
-import type { TBranchName } from "../interfaces/branch-interfaces";
-
 /**
  * Domain entity representing a Git branch
  */
 export class Branch {
-	private readonly VALUE: TBranchName;
+	private readonly VALUE: string;
 
-	constructor(name: TBranchName) {
+	constructor(name: string) {
 		this.VALUE = name;
 	}
 
-	public getName(): TBranchName {
+	public getName(): string {
 		return this.VALUE;
 	}
 
