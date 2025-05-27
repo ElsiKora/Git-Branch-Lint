@@ -55,7 +55,7 @@
 		"chalk": "^5.4.1",
 		"cosmiconfig": "^9.0.0",
 		"path-to-regexp": "^8.2.0",
-		"yargs": "^17.7.2"
+		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^19.7.1",
