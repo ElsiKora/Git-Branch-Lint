@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
-		"target": "ESNext",
-		"module": "ESNext",
-		"outDir": "bin",
-		"strict": true,
 		"esModuleInterop": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"outDir": "bin",
 		"resolveJsonModule": true,
-		"moduleResolution": "bundler"
+		"strict": true,
+		"target": "ESNext"
 	},
 	"include": ["src/**/*"]
 }

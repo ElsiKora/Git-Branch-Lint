@@ -1,23 +1,28 @@
+import type { ArgumentsCamelCase } from "yargs";
+
 import yargs from "yargs";
 
-import { createBranch } from "./application/create-branch-tool/createBranch";
-import { GetBranchConfigUseCase } from "./application/use-cases/get-branch-config-use-case";
-import { GetCurrentBranchUseCase } from "./application/use-cases/get-current-branch-use-case";
-import { LintBranchNameUseCase } from "./application/use-cases/lint-branch-name-use-case";
-import { CosmiconfigRepository } from "./infrastructure/config/cosmiconfig-repository";
-import { GitBranchRepository } from "./infrastructure/git/git-branch-repository";
-import { CliController } from "./presentation/cli/cli-controller";
-export type { BranchLintConfig } from "./domain/interfaces/config.type";
+import { CheckWorkingDirectoryUseCase } from "./application/use-cases/check-working-directory.use-case";
+import { CreateBranchUseCase } from "./application/use-cases/create-branch.use-case";
+import { GetBranchConfigUseCase } from "./application/use-cases/get-branch-config.use-case";
+import { GetCurrentBranchUseCase } from "./application/use-cases/get-current-branch.use-case";
+import { LintBranchNameUseCase } from "./application/use-cases/lint-branch-name.use-case";
+import { PushBranchUseCase } from "./application/use-cases/push-branch.use-case";
+import { CosmiconfigRepository } from "./infrastructure/config/cosmiconfig.repository";
+import { GitBranchRepository } from "./infrastructure/git/git-branch.repository";
+import { CreateBranchController } from "./presentation/cli/controllers/create-branch.controller";
+import { LintController } from "./presentation/cli/controllers/lint.controller";
+
+export type { IBranchLintConfig } from "./domain/type/config.type";
 
 /**
  * Application name used for configuration
  */
 const APP_NAME: string = "git-branch-lint";
 
-const argv: {
-	branch: boolean | undefined;
-	// eslint-disable-next-line @elsikora/typescript/no-magic-numbers
-} = yargs(process.argv.slice(2))
+const ARGS_SLICE_INDEX: number = 2;
+
+const argv: ArgumentsCamelCase = yargs(process.argv.slice(ARGS_SLICE_INDEX))
 	.option("branch", {
 		alias: "b",
 		description: "Run branch creation tool",
@@ -31,29 +36,34 @@ const argv: {
  * Main function that bootstraps the application
  */
 const main = async (): Promise<void> => {
-	if (argv.branch) {
-		try {
-			await createBranch(APP_NAME);
-		} catch (error) {
-			console.error("❌ Failed to create branch:", (error as Error).message);
-			// eslint-disable-next-line @elsikora/unicorn/no-process-exit
-			process.exit(1);
-		}
-	} else {
-		// Infrastructure layer
-		const configRepository: CosmiconfigRepository = new CosmiconfigRepository();
-		const branchRepository: GitBranchRepository = new GitBranchRepository();
+	// Infrastructure layer
+	const configRepository: CosmiconfigRepository = new CosmiconfigRepository();
+	const branchRepository: GitBranchRepository = new GitBranchRepository();
 
-		// Application layer
-		const getBranchConfigUseCase: GetBranchConfigUseCase = new GetBranchConfigUseCase(configRepository);
+	// Application layer - common use cases
+	const getBranchConfigUseCase: GetBranchConfigUseCase = new GetBranchConfigUseCase(configRepository);
+
+	const shouldRunBranch: boolean = Boolean(argv.branch);
+
+	if (shouldRunBranch) {
+		// Application layer - branch creation use cases
+		const checkWorkingDirectoryUseCase: CheckWorkingDirectoryUseCase = new CheckWorkingDirectoryUseCase(branchRepository);
+		const createBranchUseCase: CreateBranchUseCase = new CreateBranchUseCase(branchRepository);
+		const pushBranchUseCase: PushBranchUseCase = new PushBranchUseCase(branchRepository);
+
+		// Presentation layer
+		const createBranchController: CreateBranchController = new CreateBranchController(checkWorkingDirectoryUseCase, createBranchUseCase, getBranchConfigUseCase, pushBranchUseCase);
+
+		await createBranchController.execute(APP_NAME);
+	} else {
+		// Application layer - linting use cases
 		const getCurrentBranchUseCase: GetCurrentBranchUseCase = new GetCurrentBranchUseCase(branchRepository);
 		const lintBranchNameUseCase: LintBranchNameUseCase = new LintBranchNameUseCase();
 
 		// Presentation layer
-		const cliController: CliController = new CliController(getBranchConfigUseCase, getCurrentBranchUseCase, lintBranchNameUseCase);
+		const lintController: LintController = new LintController(getBranchConfigUseCase, getCurrentBranchUseCase, lintBranchNameUseCase);
 
-		// Execute the application
-		await cliController.execute(APP_NAME);
+		await lintController.execute(APP_NAME);
 	}
 };
 

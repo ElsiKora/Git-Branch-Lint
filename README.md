@@ -38,13 +38,13 @@ Git Branch Lint is a powerful tool designed to maintain consistent git branch na
 ## 🛠 Installation
 ```bash
 # Using npm
-npm install --save-dev git-branch-lint
+npm install --save-dev @elsikora/git-branch-lint
 
 # Using yarn
-yarn add -D git-branch-lint
+yarn add -D @elsikora/git-branch-lint
 
 # Using pnpm
-pnpm add -D git-branch-lint
+pnpm add -D @elsikora/git-branch-lint
 ```
 
 ## 💡 Usage
@@ -52,7 +52,7 @@ pnpm add -D git-branch-lint
 
 Run the linter directly:
 ```bash
-git-branch-lint
+npx @elsikora/git-branch-lint
 ```
 
 ## Configuration
@@ -78,7 +78,7 @@ Add to your `package.json`:
 {
   "husky": {
     "hooks": {
-      "pre-commit": "git-branch-lint"
+      "pre-commit": "npx @elsikora/git-branch-lint"
     }
   }
 }
@@ -89,16 +89,75 @@ Add to your `package.json`:
 Custom configuration in JavaScript (`.elsikora/git-branch-lint.config.js`):
 ```javascript
 module.exports = {
-  pattern: ':type/:scope/:name',
-  params: {
-    type: ['feature', 'bugfix', 'hotfix'],
-    scope: ['api', 'ui', 'core'],
-    name: ['[a-z0-9-]+'],
-  },
-  prohibited: ['wip', 'temp'],
-  minLength: 10,
-  maxLength: 100
+  branches: {
+		bugfix: { description: "🐞 Fixing issues in existing functionality", title: "Bugfix" },
+		feature: { description: "🆕 Integration of new functionality", title: "Feature" },
+		hotfix: { description: "🚑 Critical fixes for urgent issues", title: "Hotfix" },
+		release: { description: "📦 Preparing a new release version", title: "Release" },
+		support: { description: "🛠️ Support and maintenance tasks", title: "Support" },
+	},
+	ignore: ["dev"],
+	rules: {
+		"branch-max-length": 50,
+		"branch-min-length": 5,
+		"branch-pattern": ":type/:name",
+		"branch-prohibited": ["main", "master", "release"],
+		"branch-subject-pattern": "[a-z0-9-]+",
+	},
 }
+```
+
+Typescript support (`.elsikora/git-branch-lint.config.ts`):
+```typescript
+import type { BranchLintConfig } from "@elsikora/git-branch-lint";
+
+const config: BranchLintConfig = {
+ branches: {
+  bugfix: { description: "🆕 Integration of new functionality", title: "Feature" },
+  feature: { description: "🐞 Fixing issues in existing functionality", title: "Bugfix" },
+  hotfix: { description: "🚑 Critical fixes for urgent issues", title: "Hotfix" },
+  release: { description: "📦 Preparing a new release version", title: "Release" },
+  support: { description: "🛠️ Support and maintenance tasks", title: "Support" },
+ },
+ ignore: [dev],
+ rules: {
+  "branch-max-length": 50,
+  "branch-min-length": 5,
+  "branch-pattern": ":type/:name",
+  "branch-prohibited": ["main", "master", "release"],
+  "branch-subject-pattern": "[a-z0-9-]+",
+ },
+};
+
+export default config;
+```
+
+## Create branch tool
+
+Create branch tool is a command-line utility included in the @elsikora/branch-lint package. It facilitates the creation of Git branches by guiding users through an interactive prompt to select a branch type and name, ensuring compliance with the project's branch naming conventions as defined in the configuration.
+
+Example:
+```bash
+npx @elsikora/branch-lint -b
+```
+
+Prompts:
+```bash
+🌿 Creating a new branch...
+
+❔ Select the type of branch you're creating: 
+  Feature:     🆕 Integration of new functionality 
+  Bugfix:      🐞 Fixing issues in existing functionality 
+❯ Hotfix:      🚑 Critical fixes for urgent issues 
+  Release:     📦 Preparing a new release version 
+  Support:     🛠️ Support and maintenance tasks 
+
+Enter the branch name (e.g., authorization): new-ui
+
+⌛️ Creating branch: feature/new-ui
+Do you want to push the branch to the remote repository? (y/N) y
+
+✅ Branch feature/new-ui pushed to remote repository!
 ```
 
 ## CI/CD Integration
@@ -115,7 +174,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
       - run: npm install
-      - run: npx git-branch-lint
+      - run: npx @elsikora/git-branch-lint
 ```
 
 ## 🛣 Roadmap
