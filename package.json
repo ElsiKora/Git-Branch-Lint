@@ -1,6 +1,6 @@
 {
 	"name": "@elsikora/git-branch-lint",
-	"version": "1.1.0",
+	"version": "1.1.1-dev.1",
 	"description": "Lint your git branch names",
 	"keywords": [
 		"lint",
@@ -44,7 +44,10 @@
 		"lint:types": "tsc --noEmit",
 		"lint:types:fix": "tsc --noEmit --skipLibCheck",
 		"prepare": "husky",
-		"release": "semantic-release"
+		"release": "semantic-release",
+		"test:all": "npm run test:unit && npm run test:e2e",
+		"test:e2e": "npm run build && vitest --config vitest.e2e.config.js --typecheck.tsconfig tsconfig.json",
+		"test:unit": "vitest run test/unit --config vitest.unit.config.js"
 	},
 	"config": {
 		"commitizen": {
@@ -54,39 +57,43 @@
 	"dependencies": {
 		"chalk": "^5.4.1",
 		"cosmiconfig": "^9.0.0",
+		"inquirer": "^12.6.3",
 		"path-to-regexp": "^8.2.0",
-		"yargs": "^17.7.2"
+		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^19.7.1",
-		"@commitlint/config-conventional": "^19.7.1",
-		"@elsikora/commitizen-plugin-commitlint-ai": "^1.0.0",
-		"@elsikora/eslint-config": "^3.3.4",
+		"@commitlint/cli": "^19.8.1",
+		"@commitlint/config-conventional": "^19.8.1",
+		"@elsikora/commitizen-plugin-commitlint-ai": "^2.0.0",
+		"@elsikora/eslint-config": "^3.9.0",
 		"@rollup/plugin-typescript": "^12.1.2",
 		"@saithodev/semantic-release-backmerge": "^4.0.1",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/commit-analyzer": "^13.0.1",
 		"@semantic-release/git": "^10.0.1",
-		"@semantic-release/github": "^11.0.1",
+		"@semantic-release/github": "^11.0.3",
 		"@semantic-release/npm": "^12.0.1",
 		"@semantic-release/release-notes-generator": "^14.0.3",
-		"@types/inquirer": "^9.0.7",
-		"@types/node": "^22.14.1",
+		"@types/inquirer": "^9.0.8",
+		"@types/node": "^22.15.23",
 		"@types/yargs": "^17.0.33",
+		"@vitest/coverage-v8": "^3.1.4",
 		"commitizen": "^4.3.1",
-		"conventional-changelog-conventionalcommits": "^8.0.0",
-		"eslint": "^9.21.0",
-		"eslint-plugin-n": "^17.16.1",
+		"conventional-changelog-conventionalcommits": "^9.0.0",
+		"eslint": "^9.27.0",
+		"eslint-plugin-n": "^17.18.0",
 		"husky": "^9.1.7",
-		"lint-staged": "^15.4.3",
+		"lint-staged": "^16.1.0",
 		"prettier": "^3.5.3",
 		"rimraf": "^6.0.1",
-		"rollup": "^4.34.9",
-		"semantic-release": "^24.2.3",
+		"rollup": "^4.41.1",
+		"semantic-release": "^24.2.5",
 		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
-		"tsx": "^4.19.3",
-		"typescript": "^5.8.3"
+		"tsx": "^4.19.4",
+		"typescript": "^5.8.3",
+		"vite-tsconfig-paths": "^5.1.4",
+		"vitest": "^3.1.4"
 	},
 	"publishConfig": {
 		"access": "public"
