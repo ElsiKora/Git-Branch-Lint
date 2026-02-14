@@ -28,8 +28,8 @@ export class BranchCreationPrompt {
 				message: "Enter the branch name (e.g., authorization):",
 				name: "branchName",
 				type: "input",
-				// eslint-disable-next-line @elsikora/sonar/function-return-type
-				validate: (input: string): boolean | string => {
+
+				validate: (input: string): string | true => {
 					const validation: { errorMessage?: string; isValid: boolean } = this.VALIDATE_BRANCH_NAME_USE_CASE.execute(input);
 
 					if (validation.isValid) {
@@ -80,5 +80,48 @@ export class BranchCreationPrompt {
 		]);
 
 		return result.shouldPush;
+	}
+
+	/**
+	 * Prompt for ticket ID (optional)
+	 * @returns Ticket ID in uppercase or empty string if skipped
+	 */
+	public async promptTicketId(): Promise<string> {
+		const result: { ticketId: string } = await inquirer.prompt<{ ticketId: string }>([
+			{
+				message: "Ticket ID (optional, e.g., PROJ-123):",
+				name: "ticketId",
+
+				transformer: (input: string): string => {
+					// Show placeholder when empty
+					return input.trim() === "" ? "\u001B[2m(Enter to skip)\u001B[0m" : input;
+				},
+				type: "input",
+
+				validate: (input: string): string | true => {
+					// Empty is valid (optional field)
+					if (!input || input.trim() === "") {
+						return true;
+					}
+
+					// Convert to uppercase for validation
+					const upperInput: string = input.trim().toUpperCase();
+
+					// Validate format: 2+ uppercase letters, dash, digits
+					const ticketPattern: RegExp = /^[A-Z]{2,}-\d+$/;
+
+					if (!ticketPattern.test(upperInput)) {
+						return "Invalid format. Expected format: PROJ-123 (2+ letters, dash, numbers)";
+					}
+
+					return true;
+				},
+			},
+		]);
+
+		// Return uppercase version or empty string
+		const trimmed: string = result.ticketId.trim();
+
+		return trimmed ? trimmed.toUpperCase() : "";
 	}
 }
