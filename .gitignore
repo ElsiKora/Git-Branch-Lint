@@ -72,6 +72,7 @@ junit.xml
 .idea_modules/
 *.code-workspace
 .history/
+.elsikora/
 
 # IDE - Visual Studio Code
 .vscode/*

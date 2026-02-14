@@ -45,8 +45,19 @@ export class CreateBranchController {
 
 			// Prompt for branch details
 			const branchType: string = await this.BRANCH_CREATION_PROMPT.promptBranchType(config.branches);
+			const ticketId: string = await this.BRANCH_CREATION_PROMPT.promptTicketId();
 			const branchName: string = await this.BRANCH_CREATION_PROMPT.promptBranchName();
-			const fullBranchName: string = `${branchType}/${branchName}`;
+
+			// Build full branch name based on whether ticket ID is provided
+			let fullBranchName: string;
+
+			if (ticketId) {
+				// Format: type/TICKET-123-description
+				fullBranchName = `${branchType}/${ticketId}-${branchName}`;
+			} else {
+				// Format: type/description
+				fullBranchName = `${branchType}/${branchName}`;
+			}
 
 			console.error(`\n⌛️ Creating branch: ${fullBranchName}`);
 

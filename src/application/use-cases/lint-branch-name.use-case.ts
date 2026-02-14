@@ -41,30 +41,25 @@ export class LintBranchNameUseCase {
 	}
 
 	/**
-	 * Validate the branch name against the pattern
-	 * @param branchName The branch name to validate
-	 * @param config The branch configuration
-	 * @throws {PatternMatchError} When branch name doesn't match pattern
+	 * Test a branch name against a specific pattern
+	 * @param branchName The branch name to test
+	 * @param pattern The pattern to test against
+	 * @param branchTypes Available branch types
+	 * @param subjectNamePattern Pattern for the name/description part
+	 * @returns true if pattern matches
 	 */
-	private validatePattern(branchName: string, config: IBranchLintConfig): void {
-		// Start with original pattern
-		let branchNamePattern: string | undefined = config.rules?.["branch-pattern"];
-		const subjectNamePattern: string | undefined = config.rules?.["branch-subject-pattern"];
-
-		if (!branchNamePattern) {
-			return;
-		}
-
-		// Get branch types - handle both array and object formats
-		const branchTypes: Array<string> = Array.isArray(config.branches) ? config.branches : Object.keys(config.branches);
+	private testPattern(branchName: string, pattern: string, branchTypes: Array<string>, subjectNamePattern?: string): boolean {
+		let processedPattern: string = pattern;
 
 		const parameters: Record<string, Array<string>> = {
 			type: branchTypes,
-			// Если branch-name-pattern не определён, не добавляем name в params
+			// Add ticket pattern if present
+			...(processedPattern.includes(":ticket") && { ticket: ["[A-Z]{2,}-[0-9]+"] }),
+			// Add name pattern if specified
 			...(subjectNamePattern && { name: [subjectNamePattern] }),
 		};
 
-		// Обрабатываем параметры, если они есть
+		// Process parameters
 		for (const [key, values] of Object.entries(parameters)) {
 			const placeholder: string = `:${key.toLowerCase()}`;
 			let replacement: string = "(";
@@ -85,15 +80,57 @@ export class LintBranchNameUseCase {
 			}
 
 			replacement += ")";
-			branchNamePattern = branchNamePattern.replaceAll(new RegExp(placeholder, "g"), replacement);
+			processedPattern = processedPattern.replaceAll(new RegExp(placeholder, "g"), replacement);
 		}
 
 		// Create the regular expression
-		const regexp: RegExp = new RegExp(`^${branchNamePattern}$`);
+		const regexp: RegExp = new RegExp(`^${processedPattern}$`);
 
 		// Test the branch name against the pattern
-		if (!regexp.test(branchName)) {
-			throw new PatternMatchError(branchName);
+		return regexp.test(branchName);
+	}
+
+	/**
+	 * Validate the branch name against the pattern
+	 * @param branchName The branch name to validate
+	 * @param config The branch configuration
+	 * @throws {PatternMatchError} When branch name doesn't match pattern
+	 */
+	private validatePattern(branchName: string, config: IBranchLintConfig): void {
+		// Start with original pattern
+		const branchNamePattern: string | undefined = config.rules?.["branch-pattern"];
+		const subjectNamePattern: string | undefined = config.rules?.["branch-subject-pattern"];
+
+		if (!branchNamePattern) {
+			return;
 		}
+
+		// Get branch types - handle both array and object formats
+		const branchTypes: Array<string> = Array.isArray(config.branches) ? config.branches : Object.keys(config.branches);
+
+		// Check if pattern contains :ticket placeholder
+		const hasTicketPlaceholder: boolean = branchNamePattern.includes(":ticket");
+
+		// Build patterns to try - with ticket and without ticket
+		const patternsToTry: Array<string> = [];
+
+		if (hasTicketPlaceholder) {
+			// Try pattern with ticket: type/TICKET-123-description
+			// Try pattern without ticket: type/description (replace :ticket- with empty)
+			patternsToTry.push(branchNamePattern, branchNamePattern.replace(":ticket-", ""));
+		} else {
+			// Only one pattern available
+			patternsToTry.push(branchNamePattern);
+		}
+
+		// Try each pattern
+		for (const patternToTry of patternsToTry) {
+			if (this.testPattern(branchName, patternToTry, branchTypes, subjectNamePattern)) {
+				return; // Pattern matched, validation passed
+			}
+		}
+
+		// No pattern matched
+		throw new PatternMatchError(branchName);
 	}
 }

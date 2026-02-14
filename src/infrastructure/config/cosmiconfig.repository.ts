@@ -1,10 +1,12 @@
-/* eslint-disable @elsikora/typescript/no-magic-numbers */
 import type { CosmiconfigResult } from "cosmiconfig";
 
 import type { IConfigRepository } from "../../domain/interface/config.repository.interface";
 import type { IBranchLintConfig } from "../../domain/type/config.type";
 
 import { cosmiconfig } from "cosmiconfig";
+
+const BRANCH_MAX_LENGTH: number = 50;
+const BRANCH_MIN_LENGTH: number = 5;
 
 /**
  * Default configuration for branch linting
@@ -19,9 +21,9 @@ export const DEFAULT_CONFIG: IBranchLintConfig = {
 	},
 	ignore: ["dev"],
 	rules: {
-		"branch-max-length": 50,
-		"branch-min-length": 5,
-		"branch-pattern": ":type/:name",
+		"branch-max-length": BRANCH_MAX_LENGTH,
+		"branch-min-length": BRANCH_MIN_LENGTH,
+		"branch-pattern": ":type/:ticket-:name",
 		"branch-prohibited": ["main", "master", "release"],
 		"branch-subject-pattern": "[a-z0-9-]+",
 	},
