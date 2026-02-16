@@ -53,8 +53,8 @@ export class LintBranchNameUseCase {
 
 		const parameters: Record<string, Array<string>> = {
 			type: branchTypes,
-			// Add ticket pattern if present
-			...(processedPattern.includes(":ticket") && { ticket: ["[A-Z]{2,}-[0-9]+"] }),
+			// Add ticket pattern if present (accepts lowercase letters)
+			...(processedPattern.includes(":ticket") && { ticket: ["[a-z]{2,}-[0-9]+"] }),
 			// Add name pattern if specified
 			...(subjectNamePattern && { name: [subjectNamePattern] }),
 		};

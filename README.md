@@ -235,12 +235,12 @@ branch-lint:
   rules: {
     "branch-pattern": ":type/:ticket-:description",
     "branch-subject-pattern": {
-      "ticket": "[A-Z]{2,}-[0-9]+",
+      "ticket": "[a-z]{2,}-[0-9]+",
       "description": "[a-z0-9-]+"
     }
   }
 }
-// Valid: feature/PROJ-123-user-authentication
+// Valid: feature/proj-123-user-authentication
 ```
 
 #### Monorepo Pattern
