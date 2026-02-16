@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.2.0...v1.2.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **ticket id:** change ticket id formatting to lower case ([722f1a0](https://github.com/ElsiKora/Git-Branch-Lint/commit/722f1a0bb26401b4ed236297479f795b42f0eaf3))
+* **ticket id:** change ticket id formatting to lower case ([1b5e8e8](https://github.com/ElsiKora/Git-Branch-Lint/commit/1b5e8e818bdddb37cb1117568d19e1613cb68bb0))
+
 # [1.2.0](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.1.2...v1.2.0) (2026-02-14)
 
 
