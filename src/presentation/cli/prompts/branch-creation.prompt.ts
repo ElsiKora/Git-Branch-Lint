@@ -84,7 +84,7 @@ export class BranchCreationPrompt {
 
 	/**
 	 * Prompt for ticket ID (optional)
-	 * @returns Ticket ID in uppercase or empty string if skipped
+	 * @returns Ticket ID in lowercase or empty string if skipped
 	 */
 	public async promptTicketId(): Promise<string> {
 		const result: { ticketId: string } = await inquirer.prompt<{ ticketId: string }>([
@@ -104,13 +104,13 @@ export class BranchCreationPrompt {
 						return true;
 					}
 
-					// Convert to uppercase for validation
-					const upperInput: string = input.trim().toUpperCase();
+					// Normalize input for validation (case-insensitive)
+					const normalizedInput: string = input.trim();
 
-					// Validate format: 2+ uppercase letters, dash, digits
-					const ticketPattern: RegExp = /^[A-Z]{2,}-\d+$/;
+					// Validate format: 2+ letters (any case), dash, digits
+					const ticketPattern: RegExp = /^[A-Z]{2,}-\d+$/i;
 
-					if (!ticketPattern.test(upperInput)) {
+					if (!ticketPattern.test(normalizedInput)) {
 						return "Invalid format. Expected format: PROJ-123 (2+ letters, dash, numbers)";
 					}
 
@@ -119,9 +119,9 @@ export class BranchCreationPrompt {
 			},
 		]);
 
-		// Return uppercase version or empty string
+		// Return lowercase version or empty string
 		const trimmed: string = result.ticketId.trim();
 
-		return trimmed ? trimmed.toUpperCase() : "";
+		return trimmed ? trimmed.toLowerCase() : "";
 	}
 }
