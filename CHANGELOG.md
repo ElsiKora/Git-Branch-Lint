@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.1.2...v1.2.0) (2026-02-14)
+
+
+### Features
+
+* **branch-lint:** add optional ticket id support for branch naming patterns ([e198d57](https://github.com/ElsiKora/Git-Branch-Lint/commit/e198d57517d90c7c5c03b6f54576b610abced395))
+
 ## [1.1.2](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.1.1...v1.1.2) (2025-06-04)
 
 ## [1.1.1](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.1.0...v1.1.1) (2025-05-28)
