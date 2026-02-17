@@ -56,4 +56,23 @@ describe("BranchCreationPrompt", () => {
 
 		expect(value).toBe("");
 	});
+
+	it("should accept ticket placeholder in uppercase input", async () => {
+		promptMock.mockImplementation(async (questions) => {
+			const placeholderPrompt = questions[0];
+
+			expect(placeholderPrompt.validate?.("DFSF-33")).toBe(true);
+
+			return { value: "DFSF-33" };
+		});
+
+		const value: string = await prompt.promptPlaceholder({
+			example: "PROJ-123",
+			isOptional: false,
+			patternSource: "[a-z]{2,}-[0-9]+",
+			placeholderName: "ticket",
+		});
+
+		expect(value).toBe("DFSF-33");
+	});
 });

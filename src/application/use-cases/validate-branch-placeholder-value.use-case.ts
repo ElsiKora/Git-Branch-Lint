@@ -17,7 +17,8 @@ export class ValidateBranchPlaceholderValueUseCase {
 		let expression: RegExp;
 
 		try {
-			expression = new RegExp(`^${parameters.patternSource}$`);
+			const flags: string = parameters.placeholderName === "ticket" ? "i" : "";
+			expression = new RegExp(`^${parameters.patternSource}$`, flags);
 		} catch {
 			throw new InvalidBranchPatternConfigError(parameters.placeholderName, parameters.patternSource);
 		}
