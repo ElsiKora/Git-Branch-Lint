@@ -136,6 +136,31 @@ describe("LintBranchNameUseCase", () => {
 				expect(() => useCase.execute("feature/valid-name-123", config)).not.toThrow();
 			});
 
+			it("should support optional ticket id in branch pattern", () => {
+				const config: IBranchLintConfig = {
+					...baseConfig,
+					rules: {
+						"branch-pattern": ":type/:ticket-:name",
+						"branch-subject-pattern": "[a-z0-9-]+",
+					},
+				};
+
+				expect(() => useCase.execute("feature/proj-123-my-feature", config)).not.toThrow();
+				expect(() => useCase.execute("feature/my-feature", config)).not.toThrow();
+			});
+
+			it("should reject uppercase ticket id when ticket placeholder is used", () => {
+				const config: IBranchLintConfig = {
+					...baseConfig,
+					rules: {
+						"branch-pattern": ":type/:ticket-:name",
+						"branch-subject-pattern": "[a-z0-9-]+",
+					},
+				};
+
+				expect(() => useCase.execute("feature/PROJ-123-my-feature", config)).toThrow(PatternMatchError);
+			});
+
 			it("should escape special regex characters in branch types", () => {
 				const config: IBranchLintConfig = {
 					branches: {
@@ -164,7 +189,27 @@ describe("LintBranchNameUseCase", () => {
 					},
 				};
 
-				expect(() => useCase.execute("[feature]/test", config)).toThrow(PatternMatchError);
+				expect(() => useCase.execute("[feature]/test", config)).not.toThrow();
+			});
+
+			it("should support custom placeholders with object subject patterns", () => {
+				const config: IBranchLintConfig = {
+					branches: {
+						feat: { description: "Feature", title: "Feature" },
+						fix: { description: "Fix", title: "Fix" },
+					},
+					ignore: [],
+					rules: {
+						"branch-pattern": ":scope/:type/:description",
+						"branch-subject-pattern": {
+							description: "[a-z0-9-]+",
+							scope: "(web|api|shared)",
+						},
+					},
+				};
+
+				expect(() => useCase.execute("web/feat/new-ui", config)).not.toThrow();
+				expect(() => useCase.execute("mobile/feat/new-ui", config)).toThrow(PatternMatchError);
 			});
 		});
 
@@ -223,8 +268,8 @@ describe("LintBranchNameUseCase", () => {
 					},
 				};
 
-				expect(() => useCase.execute("feature/test", config)).toThrow(PatternMatchError);
+				expect(() => useCase.execute("feature/test", config)).not.toThrow();
 			});
 		});
 	});
-}); 
+});

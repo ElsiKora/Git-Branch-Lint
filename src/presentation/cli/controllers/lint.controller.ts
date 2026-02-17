@@ -45,15 +45,16 @@ export class LintController {
 
 			this.LINT_BRANCH_NAME_USE_CASE.execute(branchName, config);
 		} catch (error: unknown) {
-			await this.handleError(error as Error);
+			await this.handleError(error as Error, appName);
 		}
 	}
 
 	/**
 	 * Handle errors that occur during execution
 	 * @param error The error that occurred
+	 * @param appName The application name
 	 */
-	private async handleError(error: Error): Promise<void> {
+	private async handleError(error: Error, appName: string): Promise<void> {
 		if (!(error instanceof Error)) {
 			console.error(this.ERROR_FORMATTER.format("[LintBranchName] Unhandled error occurred"));
 
@@ -62,8 +63,7 @@ export class LintController {
 
 		if (error instanceof LintError) {
 			try {
-				// Get the configuration using the service instead of hardcoded values
-				const config: IBranchLintConfig = await this.GET_BRANCH_CONFIG_USE_CASE.execute("git-branch-lint");
+				const config: IBranchLintConfig = await this.GET_BRANCH_CONFIG_USE_CASE.execute(appName);
 
 				console.error(this.ERROR_FORMATTER.format(error.message));
 				console.error(this.HINT_FORMATTER.format(error, config));

@@ -2,11 +2,15 @@ import type { ArgumentsCamelCase } from "yargs";
 
 import yargs from "yargs";
 
+import { BuildBranchNameUseCase } from "./application/use-cases/build-branch-name.use-case";
 import { CheckWorkingDirectoryUseCase } from "./application/use-cases/check-working-directory.use-case";
 import { CreateBranchUseCase } from "./application/use-cases/create-branch.use-case";
 import { GetBranchConfigUseCase } from "./application/use-cases/get-branch-config.use-case";
+import { GetBranchPatternUseCase } from "./application/use-cases/get-branch-pattern.use-case";
+import { GetBranchPlaceholderDefinitionsUseCase } from "./application/use-cases/get-branch-placeholder-definitions.use-case";
 import { GetCurrentBranchUseCase } from "./application/use-cases/get-current-branch.use-case";
 import { LintBranchNameUseCase } from "./application/use-cases/lint-branch-name.use-case";
+import { NormalizeTicketIdUseCase } from "./application/use-cases/normalize-ticket-id.use-case";
 import { PushBranchUseCase } from "./application/use-cases/push-branch.use-case";
 import { CosmiconfigRepository } from "./infrastructure/config/cosmiconfig.repository";
 import { GitBranchRepository } from "./infrastructure/git/git-branch.repository";
@@ -48,11 +52,16 @@ const main = async (): Promise<void> => {
 	if (shouldRunBranch) {
 		// Application layer - branch creation use cases
 		const checkWorkingDirectoryUseCase: CheckWorkingDirectoryUseCase = new CheckWorkingDirectoryUseCase(branchRepository);
+		const buildBranchNameUseCase: BuildBranchNameUseCase = new BuildBranchNameUseCase();
 		const createBranchUseCase: CreateBranchUseCase = new CreateBranchUseCase(branchRepository);
+		const getBranchPatternUseCase: GetBranchPatternUseCase = new GetBranchPatternUseCase();
+		const getBranchPlaceholderDefinitionsUseCase: GetBranchPlaceholderDefinitionsUseCase = new GetBranchPlaceholderDefinitionsUseCase();
+		const lintBranchNameUseCase: LintBranchNameUseCase = new LintBranchNameUseCase();
+		const normalizeTicketIdUseCase: NormalizeTicketIdUseCase = new NormalizeTicketIdUseCase();
 		const pushBranchUseCase: PushBranchUseCase = new PushBranchUseCase(branchRepository);
 
 		// Presentation layer
-		const createBranchController: CreateBranchController = new CreateBranchController(checkWorkingDirectoryUseCase, createBranchUseCase, getBranchConfigUseCase, pushBranchUseCase);
+		const createBranchController: CreateBranchController = new CreateBranchController(buildBranchNameUseCase, checkWorkingDirectoryUseCase, createBranchUseCase, getBranchPatternUseCase, getBranchPlaceholderDefinitionsUseCase, getBranchConfigUseCase, lintBranchNameUseCase, normalizeTicketIdUseCase, pushBranchUseCase);
 
 		await createBranchController.execute(APP_NAME);
 	} else {

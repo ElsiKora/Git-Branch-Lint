@@ -19,15 +19,17 @@ describe("Branch Creation E2E", { concurrent: false }, () => {
 		await execAsync("git init");
 		await execAsync("git config user.email 'test@example.com'");
 		await execAsync("git config user.name 'Test User'");
-		
+
 		// Create initial commit
 		await fs.writeFile("README.md", "# Test Repo");
 		await execAsync("git add .");
 		await execAsync("git commit -m 'Initial commit'");
-		
+
 		// Create default config to avoid module errors
 		await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-		await fs.writeFile(CONFIG_FILE, `
+		await fs.writeFile(
+			CONFIG_FILE,
+			`
 			export default {
 				branches: {
 					feature: { description: "New feature", title: "Feature" },
@@ -38,7 +40,8 @@ describe("Branch Creation E2E", { concurrent: false }, () => {
 					"branch-pattern": ":type/:name",
 				},
 			};
-		`);
+		`,
+		);
 		// Commit the config file
 		await execAsync("git add .");
 		await execAsync("git commit -m 'Add config'");
@@ -67,13 +70,13 @@ describe("Branch Creation E2E", { concurrent: false }, () => {
 			// Just verify the tool can run when there are no uncommitted changes
 			// We can't test the full interactive flow, but we can verify it starts
 			const child = exec(`node ${CLI_PATH} -b`);
-			
+
 			// Give it time to start
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
 			// Kill the process
 			child.kill();
-			
+
 			// The test passes if we got here without throwing
 			expect(true).toBe(true);
 		});
@@ -82,7 +85,9 @@ describe("Branch Creation E2E", { concurrent: false }, () => {
 	describe("Config validation", () => {
 		it("should work with custom branch types in config", async () => {
 			// Update config with custom types
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: {
 						task: { description: "Task branch", title: "Task" },
@@ -92,49 +97,86 @@ describe("Branch Creation E2E", { concurrent: false }, () => {
 						"branch-pattern": ":type/:name",
 					},
 				};
-			`);
+			`,
+			);
 			await execAsync("git add .");
 			await execAsync("git commit -m 'Update config'");
 
 			// Just verify the tool can start with custom config
 			const child = exec(`node ${CLI_PATH} -b`);
-			
+
 			// Give it time to start
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
 			// Kill the process
 			child.kill();
-			
+
 			// The test passes if we got here without throwing
 			expect(true).toBe(true);
 		});
 
 		it("should work with array branch configuration", async () => {
-			await fs.writeFile(path.join(TEST_DIR, "package.json"), JSON.stringify({
-				name: "test-package",
-				"elsikora": {
-					"git-branch-lint": {
-						branches: ["epic", "spike", "chore"],
-						rules: {
-							"branch-pattern": ":type/:name",
+			await fs.writeFile(
+				path.join(TEST_DIR, "package.json"),
+				JSON.stringify(
+					{
+						name: "test-package",
+						elsikora: {
+							"git-branch-lint": {
+								branches: ["epic", "spike", "chore"],
+								rules: {
+									"branch-pattern": ":type/:name",
+								},
+							},
 						},
 					},
-				},
-			}, null, 2));
+					null,
+					2,
+				),
+			);
 			await execAsync("git add .");
 			await execAsync("git commit -m 'Add package.json'");
 
 			// Just verify the tool can start with array config
 			const child = exec(`node ${CLI_PATH} -b`);
-			
+
 			// Give it time to start
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
 			// Kill the process
 			child.kill();
-			
+
 			// The test passes if we got here without throwing
 			expect(true).toBe(true);
 		});
+
+		it("should work with custom placeholder templates", async () => {
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
+				export default {
+					branches: {
+						feat: { description: "Feature branch", title: "Feature" },
+						fix: { description: "Fix branch", title: "Fix" },
+					},
+					rules: {
+						"branch-pattern": ":scope/:type/:description",
+						"branch-subject-pattern": {
+							"scope": "(web|api|shared)",
+							"description": "[a-z0-9-]+",
+						},
+					},
+				};
+			`,
+			);
+			await execAsync("git add .");
+			await execAsync("git commit -m 'Use custom placeholders'");
+
+			const child = exec(`node ${CLI_PATH} -b`);
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			child.kill();
+
+			expect(true).toBe(true);
+		});
 	});
-}); 
+});

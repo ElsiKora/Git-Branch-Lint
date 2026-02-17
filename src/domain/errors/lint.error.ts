@@ -29,6 +29,16 @@ export class BranchTooShortError extends LintError {
 }
 
 /**
+ * Error thrown when a branch placeholder pattern in config is invalid.
+ */
+export class InvalidBranchPatternConfigError extends LintError {
+	constructor(placeholderName: string, patternSource: string) {
+		super(`Invalid branch pattern config for "${placeholderName}": ${patternSource}`);
+		this.name = "InvalidBranchPatternConfigError";
+	}
+}
+
+/**
  * Error thrown when branch name doesn't match the pattern
  */
 export class PatternMatchError extends LintError {
