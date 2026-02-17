@@ -36,9 +36,7 @@ describe("CheckWorkingDirectoryUseCase", () => {
 		it("should throw UncommittedChangesError with correct message", async () => {
 			vi.mocked(mockBranchRepository.hasUncommittedChanges).mockResolvedValue(true);
 
-			await expect(useCase.execute()).rejects.toThrow(
-				"You have uncommitted changes. Please commit or stash them before creating a new branch."
-			);
+			await expect(useCase.execute()).rejects.toThrow("You have uncommitted changes. Please commit or stash them before creating a new branch.");
 		});
 	});
-}); 
+});

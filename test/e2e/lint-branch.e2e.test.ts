@@ -19,7 +19,7 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		await execAsync("git init");
 		await execAsync("git config user.email 'test@example.com'");
 		await execAsync("git config user.name 'Test User'");
-		
+
 		// Create initial commit
 		await fs.writeFile("README.md", "# Test Repo");
 		await execAsync("git add .");
@@ -36,7 +36,7 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		it("should pass for valid branch names", async () => {
 			await execAsync("git checkout -b feature/new-feature");
 			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
-			
+
 			expect(stderr).toBe("");
 			expect(stdout).toBe("");
 		});
@@ -44,34 +44,40 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		it("should fail for prohibited branch names", async () => {
 			// Create default config first
 			await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: ["feature", "bugfix", "hotfix"],
 					rules: {
 						"branch-prohibited": ["main", "master"],
 					},
 				};
-			`);
-			
-			await execAsync("git checkout -b main");
-			
+			`,
+			);
+
+			await execAsync("git checkout main || git checkout -b main");
+
 			await expect(execAsync(`node ${CLI_PATH}`)).rejects.toThrow();
 		});
 
 		it("should fail for branch names that don't match pattern", async () => {
 			// Create config with pattern
 			await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: ["feature", "bugfix", "hotfix"],
 					rules: {
 						"branch-pattern": ":type/:name",
 					},
 				};
-			`);
-			
+			`,
+			);
+
 			await execAsync("git checkout -b invalid-branch-name");
-			
+
 			await expect(execAsync(`node ${CLI_PATH}`)).rejects.toThrow();
 		});
 	});
@@ -80,7 +86,9 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		beforeEach(async () => {
 			// Create custom config - use .mjs extension for ES modules
 			await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: {
 						feat: { description: "Feature", title: "Feature" },
@@ -95,13 +103,14 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 						"branch-subject-pattern": "[a-z0-9-]+",
 					},
 				};
-			`);
+			`,
+			);
 		});
 
 		it("should use custom branch types", async () => {
 			await execAsync("git checkout -b feat/custom-feature");
 			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
-			
+
 			expect(stderr).toBe("");
 			expect(stdout).toBe("");
 		});
@@ -109,20 +118,84 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		it("should respect ignore list", async () => {
 			await execAsync("git checkout -b wip");
 			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
-			
+
 			expect(stderr).toBe("");
 			expect(stdout).toBe("");
 		});
 
 		it("should enforce custom length rules", async () => {
 			await execAsync("git checkout -b feat/x");
-			
+
 			await expect(execAsync(`node ${CLI_PATH}`)).rejects.toThrow();
 		});
 
 		it("should enforce custom prohibited branches", async () => {
 			await execAsync("git checkout -b develop");
-			
+
+			await expect(execAsync(`node ${CLI_PATH}`)).rejects.toThrow();
+		});
+
+		it("should validate custom placeholders in branch pattern", async () => {
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
+				export default {
+					branches: ["feat", "fix"],
+					rules: {
+						"branch-pattern": ":scope/:type/:description",
+						"branch-subject-pattern": {
+							"scope": "(web|api|shared)",
+							"description": "[a-z0-9-]+",
+						},
+					},
+				};
+			`,
+			);
+
+			await execAsync("git checkout -b web/feat/new-ui");
+			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
+
+			expect(stderr).toBe("");
+			expect(stdout).toBe("");
+		});
+	});
+
+	describe("Optional ticket pattern", () => {
+		beforeEach(async () => {
+			await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
+				export default {
+					branches: ["feature", "bugfix", "hotfix"],
+					rules: {
+						"branch-pattern": ":type/:ticket-:name",
+						"branch-subject-pattern": "[a-z0-9-]+",
+					},
+				};
+			`,
+			);
+		});
+
+		it("should pass when ticket id is provided in lowercase", async () => {
+			await execAsync("git checkout -b feature/proj-123-new-ui");
+			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
+
+			expect(stderr).toBe("");
+			expect(stdout).toBe("");
+		});
+
+		it("should pass when optional ticket id is omitted", async () => {
+			await execAsync("git checkout -b feature/new-ui");
+			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
+
+			expect(stderr).toBe("");
+			expect(stdout).toBe("");
+		});
+
+		it("should fail when ticket id is uppercase", async () => {
+			await execAsync("git checkout -b feature/PROJ-123-new-ui");
+
 			await expect(execAsync(`node ${CLI_PATH}`)).rejects.toThrow();
 		});
 	});
@@ -131,7 +204,9 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		beforeEach(async () => {
 			// Create default config
 			await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: ["feature", "bugfix", "hotfix"],
 					rules: {
@@ -139,12 +214,13 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 						"branch-prohibited": ["main", "master"],
 					},
 				};
-			`);
+			`,
+			);
 		});
 
 		it("should show helpful error for pattern mismatch", async () => {
 			await execAsync("git checkout -b wrong-format");
-			
+
 			try {
 				await execAsync(`node ${CLI_PATH}`);
 				expect.fail("Should have thrown");
@@ -156,8 +232,8 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 		});
 
 		it("should show helpful error for prohibited branch", async () => {
-			await execAsync("git checkout -b main");
-			
+			await execAsync("git checkout main || git checkout -b main");
+
 			try {
 				await execAsync(`node ${CLI_PATH}`);
 				expect.fail("Should have thrown");
@@ -169,17 +245,20 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 
 		it("should show helpful error for length violations", async () => {
 			// Create custom config with strict length
-			await fs.writeFile(CONFIG_FILE, `
+			await fs.writeFile(
+				CONFIG_FILE,
+				`
 				export default {
 					branches: ["feature"],
 					rules: {
 						"branch-max-length": 10,
 					},
 				};
-			`);
-			
+			`,
+			);
+
 			await execAsync("git checkout -b feature-very-long-branch-name");
-			
+
 			try {
 				await execAsync(`node ${CLI_PATH}`);
 				expect.fail("Should have thrown");
@@ -192,24 +271,31 @@ describe("Branch Linting E2E", { concurrent: false }, () => {
 
 	describe("Package.json configuration", () => {
 		it("should read config from package.json", async () => {
-			await fs.writeFile(path.join(TEST_DIR, "package.json"), JSON.stringify({
-				name: "test-package",
-				"elsikora": {
-					"git-branch-lint": {
-						branches: ["custom"],
-						rules: {
-							"branch-pattern": ":type/:name",
-							"branch-subject-pattern": "[a-z-]+",
+			await fs.writeFile(
+				path.join(TEST_DIR, "package.json"),
+				JSON.stringify(
+					{
+						name: "test-package",
+						elsikora: {
+							"git-branch-lint": {
+								branches: ["custom"],
+								rules: {
+									"branch-pattern": ":type/:name",
+									"branch-subject-pattern": "[a-z-]+",
+								},
+							},
 						},
 					},
-				},
-			}, null, 2));
+					null,
+					2,
+				),
+			);
 
 			await execAsync("git checkout -b custom/test");
 			const { stdout, stderr } = await execAsync(`node ${CLI_PATH}`);
-			
+
 			expect(stderr).toBe("");
 			expect(stdout).toBe("");
 		});
 	});
-}); 
+});

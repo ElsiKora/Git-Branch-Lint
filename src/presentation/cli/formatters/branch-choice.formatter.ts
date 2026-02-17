@@ -1,10 +1,5 @@
-import type { TBranchList } from "../../../domain/type/branch.type";
-
-interface IBranchChoiceFormatted {
-	name: string;
-	short: string;
-	value: string;
-}
+import type { IBranchDetails, TBranchList } from "../../../domain/type/branch.type";
+import type { IBranchChoiceFormatted } from "../type/branch-choice-formatted.type";
 
 /**
  * Formatter for branch choices in CLI prompts
@@ -29,12 +24,12 @@ export class BranchChoiceFormatter {
 	/**
 	 * Format detailed branch list (object with descriptions)
 	 */
-	private formatDetailedList(branchList: Record<string, { description: string; title: string }>): Array<IBranchChoiceFormatted> {
+	private formatDetailedList(branchList: Record<string, IBranchDetails>): Array<IBranchChoiceFormatted> {
 		const branchNames: Array<string> = Object.keys(branchList);
 		const maxNameLength: number = Math.max(...branchNames.map((name: string) => name.length));
 
 		return branchNames.map((branchName: string) => {
-			const branch: { description: string; title: string } = branchList[branchName];
+			const branch: IBranchDetails = branchList[branchName];
 			const padding: string = " ".repeat(maxNameLength - branchName.length + this.EMPTY_SPACING_OFFSET);
 
 			return {

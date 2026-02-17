@@ -1,6 +1,12 @@
+import type { IBranchPlaceholderDefinition } from "../../../application/type/branch-placeholder-definition.type";
+import type { BuildBranchNameUseCase } from "../../../application/use-cases/build-branch-name.use-case";
 import type { CheckWorkingDirectoryUseCase } from "../../../application/use-cases/check-working-directory.use-case";
 import type { CreateBranchUseCase } from "../../../application/use-cases/create-branch.use-case";
 import type { GetBranchConfigUseCase } from "../../../application/use-cases/get-branch-config.use-case";
+import type { GetBranchPatternUseCase } from "../../../application/use-cases/get-branch-pattern.use-case";
+import type { GetBranchPlaceholderDefinitionsUseCase } from "../../../application/use-cases/get-branch-placeholder-definitions.use-case";
+import type { LintBranchNameUseCase } from "../../../application/use-cases/lint-branch-name.use-case";
+import type { NormalizeTicketIdUseCase } from "../../../application/use-cases/normalize-ticket-id.use-case";
 import type { PushBranchUseCase } from "../../../application/use-cases/push-branch.use-case";
 import type { IBranchLintConfig } from "../../../domain/type/config.type";
 
@@ -13,18 +19,43 @@ import { BranchCreationPrompt } from "../prompts/branch-creation.prompt";
 export class CreateBranchController {
 	private readonly BRANCH_CREATION_PROMPT: BranchCreationPrompt;
 
+	private readonly BUILD_BRANCH_NAME_USE_CASE: BuildBranchNameUseCase;
+
 	private readonly CHECK_WORKING_DIRECTORY_USE_CASE: CheckWorkingDirectoryUseCase;
 
 	private readonly CREATE_BRANCH_USE_CASE: CreateBranchUseCase;
 
 	private readonly GET_BRANCH_CONFIG_USE_CASE: GetBranchConfigUseCase;
 
+	private readonly GET_BRANCH_PATTERN_USE_CASE: GetBranchPatternUseCase;
+
+	private readonly GET_BRANCH_PLACEHOLDER_DEFINITIONS_USE_CASE: GetBranchPlaceholderDefinitionsUseCase;
+
+	private readonly LINT_BRANCH_NAME_USE_CASE: LintBranchNameUseCase;
+
+	private readonly NORMALIZE_TICKET_ID_USE_CASE: NormalizeTicketIdUseCase;
+
 	private readonly PUSH_BRANCH_USE_CASE: PushBranchUseCase;
 
-	public constructor(checkWorkingDirectoryUseCase: CheckWorkingDirectoryUseCase, createBranchUseCase: CreateBranchUseCase, getBranchConfigUseCase: GetBranchConfigUseCase, pushBranchUseCase: PushBranchUseCase) {
+	public constructor(
+		buildBranchNameUseCase: BuildBranchNameUseCase,
+		checkWorkingDirectoryUseCase: CheckWorkingDirectoryUseCase,
+		createBranchUseCase: CreateBranchUseCase,
+		getBranchPatternUseCase: GetBranchPatternUseCase,
+		getBranchPlaceholderDefinitionsUseCase: GetBranchPlaceholderDefinitionsUseCase,
+		getBranchConfigUseCase: GetBranchConfigUseCase,
+		lintBranchNameUseCase: LintBranchNameUseCase,
+		normalizeTicketIdUseCase: NormalizeTicketIdUseCase,
+		pushBranchUseCase: PushBranchUseCase,
+	) {
+		this.BUILD_BRANCH_NAME_USE_CASE = buildBranchNameUseCase;
 		this.CHECK_WORKING_DIRECTORY_USE_CASE = checkWorkingDirectoryUseCase;
 		this.CREATE_BRANCH_USE_CASE = createBranchUseCase;
 		this.GET_BRANCH_CONFIG_USE_CASE = getBranchConfigUseCase;
+		this.GET_BRANCH_PATTERN_USE_CASE = getBranchPatternUseCase;
+		this.GET_BRANCH_PLACEHOLDER_DEFINITIONS_USE_CASE = getBranchPlaceholderDefinitionsUseCase;
+		this.LINT_BRANCH_NAME_USE_CASE = lintBranchNameUseCase;
+		this.NORMALIZE_TICKET_ID_USE_CASE = normalizeTicketIdUseCase;
 		this.PUSH_BRANCH_USE_CASE = pushBranchUseCase;
 		this.BRANCH_CREATION_PROMPT = new BranchCreationPrompt();
 	}
@@ -42,22 +73,33 @@ export class CreateBranchController {
 
 			// Get configuration
 			const config: IBranchLintConfig = await this.GET_BRANCH_CONFIG_USE_CASE.execute(appName);
+			const branchPattern: string = this.GET_BRANCH_PATTERN_USE_CASE.execute(config);
+			const placeholderDefinitions: Array<IBranchPlaceholderDefinition> = this.GET_BRANCH_PLACEHOLDER_DEFINITIONS_USE_CASE.execute({ config });
+			const placeholderValues: Record<string, string> = {};
 
-			// Prompt for branch details
-			const branchType: string = await this.BRANCH_CREATION_PROMPT.promptBranchType(config.branches);
-			const ticketId: string = await this.BRANCH_CREATION_PROMPT.promptTicketId();
-			const branchName: string = await this.BRANCH_CREATION_PROMPT.promptBranchName();
+			for (const placeholderDefinition of placeholderDefinitions) {
+				if (placeholderDefinition.isTypePlaceholder) {
+					placeholderValues.type = await this.BRANCH_CREATION_PROMPT.promptBranchType(config.branches);
+					continue;
+				}
 
-			// Build full branch name based on whether ticket ID is provided
-			let fullBranchName: string;
+				const inputValue: string = await this.BRANCH_CREATION_PROMPT.promptPlaceholder({
+					example: placeholderDefinition.example,
+					isOptional: placeholderDefinition.isOptional,
+					patternSource: placeholderDefinition.patternSource ?? "",
+					placeholderName: placeholderDefinition.placeholderName,
+				});
 
-			if (ticketId) {
-				// Format: type/TICKET-123-description
-				fullBranchName = `${branchType}/${ticketId}-${branchName}`;
-			} else {
-				// Format: type/description
-				fullBranchName = `${branchType}/${branchName}`;
+				placeholderValues[placeholderDefinition.placeholderName] = placeholderDefinition.placeholderName === "ticket" ? this.NORMALIZE_TICKET_ID_USE_CASE.execute(inputValue) : inputValue;
 			}
+
+			const fullBranchName: string = this.BUILD_BRANCH_NAME_USE_CASE.execute({
+				branchPattern,
+				placeholderValues,
+			});
+
+			// Re-validate the final assembled branch name with full lint rules before creation.
+			this.LINT_BRANCH_NAME_USE_CASE.execute(fullBranchName, config);
 
 			console.error(`\n⌛️ Creating branch: ${fullBranchName}`);
 
