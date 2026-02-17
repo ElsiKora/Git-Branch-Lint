@@ -54,4 +54,4 @@ describe("Branch Creation Errors", () => {
 			expect(error.message).toBe("You have uncommitted changes. Please commit or stash them before creating a new branch.");
 		});
 	});
-}); 
+});

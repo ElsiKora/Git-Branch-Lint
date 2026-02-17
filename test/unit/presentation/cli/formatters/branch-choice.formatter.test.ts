@@ -55,7 +55,7 @@ describe("BranchChoiceFormatter", () => {
 				const result = formatter.format(branches);
 
 				expect(result).toHaveLength(3);
-				
+
 				// Check that longer branch names get proper padding
 				expect(result[0].name).toMatch(/Feature:\s+New functionality/);
 				expect(result[0].short).toBe("Feature");
@@ -103,4 +103,4 @@ describe("BranchChoiceFormatter", () => {
 			});
 		});
 	});
-}); 
+});

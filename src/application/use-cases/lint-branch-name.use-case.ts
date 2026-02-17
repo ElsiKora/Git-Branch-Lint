@@ -1,12 +1,20 @@
+import type { TBranchSubjectPattern } from "../../domain/type/branch-subject-pattern.type";
 import type { IBranchLintConfig } from "../../domain/type/config.type";
 
 import { Branch } from "../../domain/entity/branch.entity";
 import { BranchTooLongError, BranchTooShortError, PatternMatchError, ProhibitedBranchError } from "../../domain/errors/lint.error";
+import { BranchTemplatePolicy } from "../../domain/policy/branch-template.policy";
 
 /**
  * Use case for linting branch names
  */
 export class LintBranchNameUseCase {
+	private readonly BRANCH_TEMPLATE_POLICY: BranchTemplatePolicy;
+
+	public constructor(branchTemplatePolicy: BranchTemplatePolicy = new BranchTemplatePolicy()) {
+		this.BRANCH_TEMPLATE_POLICY = branchTemplatePolicy;
+	}
+
 	/**
 	 * Execute the use case
 	 * @param branchName The branch name to lint
@@ -41,56 +49,6 @@ export class LintBranchNameUseCase {
 	}
 
 	/**
-	 * Test a branch name against a specific pattern
-	 * @param branchName The branch name to test
-	 * @param pattern The pattern to test against
-	 * @param branchTypes Available branch types
-	 * @param subjectNamePattern Pattern for the name/description part
-	 * @returns true if pattern matches
-	 */
-	private testPattern(branchName: string, pattern: string, branchTypes: Array<string>, subjectNamePattern?: string): boolean {
-		let processedPattern: string = pattern;
-
-		const parameters: Record<string, Array<string>> = {
-			type: branchTypes,
-			// Add ticket pattern if present (accepts lowercase letters)
-			...(processedPattern.includes(":ticket") && { ticket: ["[a-z]{2,}-[0-9]+"] }),
-			// Add name pattern if specified
-			...(subjectNamePattern && { name: [subjectNamePattern] }),
-		};
-
-		// Process parameters
-		for (const [key, values] of Object.entries(parameters)) {
-			const placeholder: string = `:${key.toLowerCase()}`;
-			let replacement: string = "(";
-
-			for (let index: number = 0; index < values.length; index++) {
-				const value: string = values[index];
-
-				if (value.startsWith("[")) {
-					replacement += value;
-				} else {
-					const escapedValue: string = value.replaceAll(/[-/\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
-					replacement += escapedValue;
-				}
-
-				if (index < values.length - 1) {
-					replacement += "|";
-				}
-			}
-
-			replacement += ")";
-			processedPattern = processedPattern.replaceAll(new RegExp(placeholder, "g"), replacement);
-		}
-
-		// Create the regular expression
-		const regexp: RegExp = new RegExp(`^${processedPattern}$`);
-
-		// Test the branch name against the pattern
-		return regexp.test(branchName);
-	}
-
-	/**
 	 * Validate the branch name against the pattern
 	 * @param branchName The branch name to validate
 	 * @param config The branch configuration
@@ -99,38 +57,37 @@ export class LintBranchNameUseCase {
 	private validatePattern(branchName: string, config: IBranchLintConfig): void {
 		// Start with original pattern
 		const branchNamePattern: string | undefined = config.rules?.["branch-pattern"];
-		const subjectNamePattern: string | undefined = config.rules?.["branch-subject-pattern"];
+		const subjectPattern: TBranchSubjectPattern | undefined = config.rules?.["branch-subject-pattern"];
 
 		if (!branchNamePattern) {
 			return;
 		}
 
-		// Get branch types - handle both array and object formats
 		const branchTypes: Array<string> = Array.isArray(config.branches) ? config.branches : Object.keys(config.branches);
+		const placeholders: Array<string> = this.BRANCH_TEMPLATE_POLICY.getPlaceholders(branchNamePattern);
+		const patternVariants: Array<string> = this.BRANCH_TEMPLATE_POLICY.buildValidationPatterns(branchNamePattern);
 
-		// Check if pattern contains :ticket placeholder
-		const hasTicketPlaceholder: boolean = branchNamePattern.includes(":ticket");
+		for (const patternVariant of patternVariants) {
+			let resolvedPattern: string = patternVariant;
 
-		// Build patterns to try - with ticket and without ticket
-		const patternsToTry: Array<string> = [];
+			for (const placeholder of placeholders) {
+				const placeholderToken: string = `:${placeholder}`;
 
-		if (hasTicketPlaceholder) {
-			// Try pattern with ticket: type/TICKET-123-description
-			// Try pattern without ticket: type/description (replace :ticket- with empty)
-			patternsToTry.push(branchNamePattern, branchNamePattern.replace(":ticket-", ""));
-		} else {
-			// Only one pattern available
-			patternsToTry.push(branchNamePattern);
-		}
+				if (!resolvedPattern.includes(placeholderToken)) {
+					continue;
+				}
 
-		// Try each pattern
-		for (const patternToTry of patternsToTry) {
-			if (this.testPattern(branchName, patternToTry, branchTypes, subjectNamePattern)) {
-				return; // Pattern matched, validation passed
+				const patternSource: string = this.BRANCH_TEMPLATE_POLICY.resolvePlaceholderPatternSource(placeholder, branchTypes, subjectPattern);
+				resolvedPattern = resolvedPattern.replaceAll(placeholderToken, `(${patternSource})`);
+			}
+
+			const expression: RegExp = new RegExp(`^${resolvedPattern}$`);
+
+			if (expression.test(branchName)) {
+				return;
 			}
 		}
 
-		// No pattern matched
 		throw new PatternMatchError(branchName);
 	}
 }

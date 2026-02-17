@@ -98,4 +98,4 @@ describe("Branch Entity", () => {
 			expect(branch.isTooShort(6)).toBe(true);
 		});
 	});
-}); 
+});

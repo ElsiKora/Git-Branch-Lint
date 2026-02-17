@@ -28,7 +28,7 @@ describe("HintFormatter", () => {
 		describe("ProhibitedBranchError", () => {
 			it("should format hint for prohibited branch error", () => {
 				const error = new ProhibitedBranchError("main");
-				
+
 				const result = formatter.format(error, baseConfig);
 
 				expect(result).toContain("Prohibited branch names:");
@@ -136,4 +136,4 @@ describe("HintFormatter", () => {
 			});
 		});
 	});
-}); 
+});

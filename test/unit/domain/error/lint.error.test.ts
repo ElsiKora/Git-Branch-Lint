@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BranchTooLongError, BranchTooShortError, LintError, PatternMatchError, ProhibitedBranchError } from "../../../../src/domain/errors/lint.error";
+import { BranchTooLongError, BranchTooShortError, InvalidBranchPatternConfigError, LintError, PatternMatchError, ProhibitedBranchError } from "../../../../src/domain/errors/lint.error";
 
 describe("Lint Errors", () => {
 	describe("LintError", () => {
@@ -58,4 +58,16 @@ describe("Lint Errors", () => {
 			expect(error.message).toBe(`Branch name "${branchName}" is prohibited`);
 		});
 	});
-}); 
+
+	describe("InvalidBranchPatternConfigError", () => {
+		it("should create error with correct message", () => {
+			const placeholderName = "description";
+			const patternSource = "[a-z";
+			const error = new InvalidBranchPatternConfigError(placeholderName, patternSource);
+
+			expect(error).toBeInstanceOf(LintError);
+			expect(error.name).toBe("InvalidBranchPatternConfigError");
+			expect(error.message).toBe(`Invalid branch pattern config for "${placeholderName}": ${patternSource}`);
+		});
+	});
+});
