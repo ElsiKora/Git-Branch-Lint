@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.2.1...v1.2.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* **branch-validation:** make ticket placeholder validation case-insensitive ([a43e33b](https://github.com/ElsiKora/Git-Branch-Lint/commit/a43e33b1394875ed4390686d42f8f926ac6e0973))
+
 ## [1.2.1](https://github.com/ElsiKora/Git-Branch-Lint/compare/v1.2.0...v1.2.1) (2026-02-16)
 
 ### Bug Fixes
